@@ -1,6 +1,8 @@
-# Foundry Template
+# DSS Onboard Ilk Helper
 
-Template for Smart Contract applications compatible with [foundry](https://github.com/foundry-rs/foundry).
+Facilitates the onboarding of new ilks into DSS.
+
+This repo contain all of the pre-spell steps required to add a new ilk to the system.
 
 ## Usage
 
@@ -32,8 +34,3 @@ make test # using a local node listening on http://localhost:8545
 # Or
 ETH_RPC_URL='https://eth-goerli.alchemyapi.io/v2/<ALCHEMY_API_KEY>' make test # using a remote node
 ```
-
-### Edit as needed
-
-- Put contracts and tests in `src/`
-- Modify the `Makefile` targets accordingly
