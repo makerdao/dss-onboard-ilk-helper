@@ -1,0 +1,43 @@
+{
+  "name": "foundry-template",
+  "version": "0.1.0",
+  "main": "index.js",
+  "repository": "git@github.com:clio-finance/foundry-template.git",
+  "author": "Clio Finance <ops@clio.finance>",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "prepare": "husky install",
+    "prepublishOnly": "copyfiles -u 1 \"./src/**/*.sol\" ./",
+    "postpublish": "rimraf ./*.sol",
+    "prepack": "run-s prepublishOnly",
+    "postpack": "run-s postpublish",
+    "lint": "run-s solhint prettier",
+    "lint:check": "run-s prettier:check solhint:check",
+    "prettier": "run-s 'prettier:check --write'",
+    "prettier:check": "prettier --check \"src/**/*.sol\"",
+    "solhint": "run-s 'solhint:check --fix'",
+    "solhint:check": "solhint --config ./.solhint.json \"src/**/*.sol\""
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^17.0.2",
+    "@commitlint/config-conventional": "^17.0.2",
+    "copyfiles": "^2.4.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.7.0",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "rimraf": "^3.0.2",
+    "solhint": "^3.3.7",
+    "solhint-plugin-prettier": "^0.0.5"
+  },
+  "lint-staged": {
+    "*.{js,css,md,sol}": "prettier --write",
+    "*.sh": "shfmt --write"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  }
+}
