@@ -1,4 +1,4 @@
-# DSS Onboard Ilk Helper
+# DSS onboard ilk helper
 
 Facilitates the onboarding of new ilks into DSS.
 
@@ -27,10 +27,4 @@ cp .env.example .env
 make build
 ```
 
-### Test contracts
-
-```bash
-make test # using a local node listening on http://localhost:8545
-# Or
-ETH_RPC_URL='https://eth-goerli.alchemyapi.io/v2/<ALCHEMY_API_KEY>' make test # using a remote node
-```
+### TODO

@@ -13,9 +13,18 @@ deploy() {
 
   check-required-etherscan-api-key
 
+  # Remove the --json flag if passed because it is always passed below
+  local ARGS="$(sed -r 's/\s*--json\b//' <<<"$@")"
+  local RESPONSE=
   # Log the command being issued, making sure not to expose the password
-  log "forge create --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/=.*$/=[REDACTED]/' <<<"${PASSWORD_OPT}") $@"
-  forge create --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" ${PASSWORD_OPT} $@
+  log "forge create --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/=.*$/=[REDACTED]/' <<<"$PASSWORD_OPT") --json $ARGS"
+  # Currently `forge create` send the logs to stdout instead of stderr.
+  # This makes it hard to compose its output with other commands, so here we are:
+  # 1. Duplicating stdout to stderr through `tee`
+  # 2. Extracting only the address of the deployed contract to stdout
+  RESPONSE=$(forge create --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" "$PASSWORD_OPT" --json $ARGS | tee >(cat 1>&2))
+
+  jq -Rr 'fromjson? | .deployedTo' <<<"$RESPONSE"
 }
 
 check-required-etherscan-api-key() {
@@ -29,7 +38,7 @@ check-required-etherscan-api-key() {
 
 usage() {
   cat <<MSG
-forge-deploy.sh --contract <file>:<contract> [ --verify ] [ --constructor-args ...args ]
+forge-deploy.sh [<file>:]<contract> [ --verify ] [ --constructor-args ...args ]
 
 Examples:
 
@@ -42,57 +51,10 @@ MSG
 }
 
 if [ "$0" = "$BASH_SOURCE" ]; then
-  optspec="h help contract: verify constructor-args"
+  [ "$1" = "-h" -o "$1" = "--help" ] && {
+    echo -e "\n$(usage)\n"
+    exit 0
+  }
 
-  contract=
-  has_constructor_args=0
-  should_verify=0
-
-  while getopts_long "$optspec" OPT; do
-    case "$OPT" in
-      'h' | 'help')
-        echo -e "$(usage)"
-        exit 0
-        ;;
-      'contract')
-        [ -z "$OPTARG" ] && {
-          log "\n--contract option is missing its argument\n"
-          die "$(usage)"
-        }
-        contract="$OPTARG"
-        ;;
-      'verify')
-        should_verify=1
-        ;;
-      'constructor-args')
-        has_constructor_args=1
-        # Constructor args must be the last arguments
-        break
-        ;;
-      ':')
-        # bad long option
-        log "\nMissing argument for option --${OPTARG}\n"
-        die "$(usage)"
-        ;;
-      ?)
-        log "\nIllegal option -- ${BOLD}${OPT}${OFF}\n"
-        die "$(usage)"
-        ;;
-    esac
-  done
-  shift $((OPTIND - 1))
-  [[ "${1}" == "--" ]] && shift
-
-  debug $@
-
-  [ -n "$contract" ] || die "Option --contract is required\n\n$(usage)"
-
-  args=()
-  [ $should_verify -eq 1 ] && args+=('--verify')
-
-  if [ $has_constructor_args -eq 0 ]; then
-    deploy "$contract" "${args[@]}"
-  else
-    deploy "$contract" "${args[@]}" --constructor-args "$@"
-  fi
+  deploy "$@"
 fi
