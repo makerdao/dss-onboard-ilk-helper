@@ -4,3 +4,6 @@
 [submodule "lib/dummy-token"]
 	path = lib/dummy-token
 	url = https://github.com/clio-finance/dummy-token
+[submodule "lib/ds-value"]
+	path = lib/ds-value
+	url = https://github.com/dapphub/ds-value
