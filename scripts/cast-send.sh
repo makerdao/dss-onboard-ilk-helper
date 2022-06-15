@@ -11,12 +11,10 @@ send() {
     PASSWORD_OPT="--password=${PASSWORD}"
   fi
 
-  # Remove the --json flag if passed because it is always passed below
-  local ARGS="$(sed -r 's/\s*--json\b//' <<<"$@")"
   local RESPONSE
   # Log the command being issued, making sure not to expose the password
-  log "cast send --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/=.*$/=[REDACTED]/' <<<"$PASSWORD_OPT") --json $ARGS"
-  RESPONSE=$(cast send --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" "$PASSWORD_OPT" --json $ARGS)
+  log "cast send --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/=.*$/=[REDACTED]/' <<<"$PASSWORD_OPT") --json" $(printf ' %q' "$@")
+  RESPONSE=$(cast send --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" "$PASSWORD_OPT" --json "$@" | tee >(cat 1>&2))
 
   jq -r '.transactionHash' <<<"$RESPONSE"
 }
