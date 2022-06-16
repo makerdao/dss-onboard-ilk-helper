@@ -14,6 +14,10 @@ send() {
   local RESPONSE
   # Log the command being issued, making sure not to expose the password
   log "cast send --gas $FOUNDRY_GAS_LIMIT --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/=.*$/=[REDACTED]/' <<<"$PASSWORD_OPT") --json" $(printf ' %q' "$@")
+  # Currently `cast send` sends the logs to stdout instead of stderr.
+  # This makes it hard to compose its output with other commands, so here we are:
+  # 1. Duplicating stdout to stderr through `tee`
+  # 2. Extracting only the hash of the transaction to stdout
   RESPONSE=$(cast send --gas $FOUNDRY_GAS_LIMIT --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" "$PASSWORD_OPT" --json "$@" | tee >(cat 1>&2))
 
   jq -r '.transactionHash' <<<"$RESPONSE"

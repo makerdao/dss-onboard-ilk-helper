@@ -7,32 +7,22 @@ function verify() {
   normalize-env-vars
   check-required-etherscan-api-key
 
-  local ADDRESS="$1"
-  local CONTRACT="$2"
-  local CONSTRUCTOR_ARGS="$3"
-
-  local CONSTRUCTOR_ARGS_OPT=''
-  if [ -n "$CONSTRUCTOR_ARGS" ]; then
-    # Remove the 0x prefix from the constructor args
-    CONSTRUCTOR_ARGS_OPT="--constructor-args ${CONSTRUCTOR_ARGS#0x}"
-  fi
-
   local CHAIN="$(cast chain)"
   [ CHAIN = 'ethlive' ] && CHAIN='mainnet'
 
-  verify-msg() {
-    cat <<MSG
-forge verify-contract \\
-  --chain "$CHAIN" \\
-  "$ADDRESS" "$CONTRACT" "$FOUNDRY_ETHERSCAN_API_KEY" $CONSTRUCTOR_ARGS_OPT
-MSG
-  }
+  local RESPONSE=
+  # Log the command being issued
+  log "forge verify-contract --chain $CHAIN" $(printf ' %q' "$@")
+  # Currently `forge verify-contract` sends the logs to stdout instead of stderr.
+  # This makes it hard to compose its output with other commands, so here we are:
+  # 1. Duplicating stdout to stderr through `tee`
+  # 2. Extracting only the URL of the verified contract to stdout
+  RESPONSE=$(forge verify-contract --chain "$CHAIN" --watch "$@" | tee >(cat 1>&2))
 
-  log "$(verify-msg)"
-
-  forge verify-contract \
-    --chain "$CHAIN" --watch \
-    "$ADDRESS" "$CONTRACT" "$FOUNDRY_ETHERSCAN_API_KEY" $CONSTRUCTOR_ARGS_OPT
+  # Display only the URL
+  if grep -E -i '^\s*Response:.*OK.*$' <<<"$RESPONSE" >/dev/null; then
+    grep -E -i '^\s*URL:' <<<"$RESPONSE" | head -1 | awk -F': ' '{ print $2 }' | sed -r 's/(^\s*|\s*$)//'
+  fi
 }
 
 function check-required-etherscan-api-key() {
@@ -46,7 +36,7 @@ forge-verify.sh <address> <file>:<contract> [ --constructor-args <abi_encoded_ar
 Examples:
 
     # Constructor does not take any arguments
-    forge-verify.sh 0xdead...0000  src/MyContract.sol:MyContract
+    forge-verify.sh 0xdead...0000 src/MyContract.sol:MyContract
 
     # Constructor takes (uint, address) arguments. Don't forget to abi-encode them!
     forge-verify.sh 0xdead...0000 src/MyContract.sol:MyContract \\
