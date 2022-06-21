@@ -8,19 +8,19 @@ deploy() {
 
   local PASSWORD="$(extract-password)"
   if [ -n "$PASSWORD" ]; then
-    PASSWORD_OPT="--password ${PASSWORD}"
+    PASSWORD_OPT=(--password "$PASSWORD")
   fi
 
   check-required-etherscan-api-key
 
   local RESPONSE=
   # Log the command being issued, making sure not to expose the password
-  log "forge create --gas-limit $FOUNDRY_GAS_LIMIT --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/=.*$/=[REDACTED]/' <<<"$PASSWORD_OPT") --json" $(printf ' %q' "$@")
+  log "forge create --gas-limit $FOUNDRY_GAS_LIMIT --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" $(sed 's/ .*$/ [REDACTED]/' <<<"${PASSWORD_OPT[@]}") --json" $(printf ' %q' "$@")
   # Currently `forge create` sends the logs to stdout instead of stderr.
   # This makes it hard to compose its output with other commands, so here we are:
   # 1. Duplicating stdout to stderr through `tee`
   # 2. Extracting only the address of the deployed contract to stdout
-  RESPONSE=$(forge create --gas-limit $FOUNDRY_GAS_LIMIT --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" "$PASSWORD_OPT" --json "$@" | tee >(cat 1>&2))
+  RESPONSE=$(forge create --gas-limit $FOUNDRY_GAS_LIMIT --keystore="$FOUNDRY_ETH_KEYSTORE_FILE" "${PASSWORD_OPT[@]}" --json "$@" | tee >(cat 1>&2))
 
   jq -Rr 'fromjson? | .deployedTo' <<<"$RESPONSE"
 }
