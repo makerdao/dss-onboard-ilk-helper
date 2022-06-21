@@ -8,7 +8,7 @@ deploy() {
 
   local PASSWORD="$(extract-password)"
   if [ -n "$PASSWORD" ]; then
-    PASSWORD_OPT="--password=${PASSWORD}"
+    PASSWORD_OPT="--password ${PASSWORD}"
   fi
 
   check-required-etherscan-api-key
